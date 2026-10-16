@@ -1,0 +1,45 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+    # For TLS remote Loki, use:
+    # url: https://loki.example.internal:3100/loki/api/v1/push
+    # tls_config:
+    #   ca_file: /etc/promtail/ca.crt
+    #   cert_file: /etc/promtail/client.crt
+    #   key_file: /etc/promtail/client.key
+    # basic_auth:
+    #   username: promtail
+    #   password_file: /etc/promtail/password
+
+scrape_configs:
+  - job_name: journal
+    journal:
+      json: false
+      max_age: 12h
+      path: /var/log/journal
+    relabel_configs:
+      - source_labels: ["__journal__systemd_unit"]
+        target_label: unit
+    pipeline_stages:
+      - drop:
+          source: unit
+          expression: "debug|trace"
+          drop_counter_reason: excessive_debug_logs
+
+  - job_name: varlogs
+    static_configs:
+      - targets: ["localhost"]
+        labels:
+          job: varlogs
+          __path__: /var/log/*log
+    pipeline_stages:
+      - match:
+          selector: '{job="varlogs"} |= "DEBUG"'
+          action: drop
+          drop_counter_reason: drop_debug_level

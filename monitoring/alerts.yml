@@ -1,0 +1,90 @@
+groups:
+  - name: node
+    interval: 30s
+    rules:
+      - alert: InstanceDown
+        expr: up == 0
+        for: 5m
+        labels: { severity: critical }
+        annotations:
+          summary: "Instance {{ $labels.instance }} down"
+          description: "{{ $labels.job }}/{{ $labels.instance }} unreachable for 5m."
+
+      - alert: CPUHigh
+        expr: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "High CPU on {{ $labels.instance }}"
+
+      - alert: MemoryHigh
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "High memory on {{ $labels.instance }}"
+
+      - alert: DiskFilling
+        expr: >
+          (1 - (node_filesystem_avail_bytes{mountpoint="/"}
+          / node_filesystem_size_bytes{mountpoint="/"})) * 100 > 80
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "Disk >80% full on {{ $labels.instance }}"
+
+      - alert: DiskWillFill
+        expr: predict_linear(node_filesystem_avail_bytes{mountpoint="/"}[6h], 24 * 3600) < 0
+        for: 30m
+        labels: { severity: warning }
+        annotations:
+          summary: "Disk predicted to fill within 24h on {{ $labels.instance }}"
+
+  - name: slo-burn
+    interval: 1m
+    rules:
+      - alert: SLOBurnFast
+        expr: |
+          sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
+          /
+          sum(rate(http_server_requests_seconds_count[5m])) > 0.02
+        for: 5m
+        labels: { severity: critical, slo: availability }
+        annotations:
+          summary: "Fast error-budget burn (>2% 5xx for 5m)"
+
+      - alert: SLOBurnSlow
+        expr: |
+          sum(rate(http_server_requests_seconds_count{status=~"5.."}[1h]))
+          /
+          sum(rate(http_server_requests_seconds_count[1h])) > 0.005
+        for: 30m
+        labels: { severity: warning, slo: availability }
+        annotations:
+          summary: "Slow error-budget burn (>0.5% 5xx for 1h)"
+
+      - alert: LatencySLOBurn
+        expr: histogram_quantile(0.99, sum by (le) (rate(http_server_requests_seconds_bucket[5m]))) > 0.6
+        for: 15m
+        labels: { severity: warning, slo: latency }
+        annotations:
+          summary: "p99 latency above 600ms for 15m"
+
+  - name: pipeline
+    interval: 1m
+    rules:
+      - alert: LokiIngestionLag
+        expr: >
+          sum(rate(loki_distributor_lines_received_total[5m]))
+          - sum(rate(loki_ingester_streams_created_total[5m])) > 1000
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "Possible Loki ingestion lag/drop"
+
+      - alert: TraceDropHigh
+        expr: sum(rate(otelcol_processor_dropped_spans[5m])) > 10
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "OTel collector dropping spans"

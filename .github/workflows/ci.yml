@@ -1,0 +1,47 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install linters and test deps
+        run: |
+          pip install yamllint pytest
+
+      - name: YAML lint
+        run: yamllint .
+
+      - name: Promtool check
+        run: |
+          docker run --rm -v "$PWD:/work" prom/prometheus:v2.53.0 \
+            promtool check rules /work/monitoring/alerts.yml
+          docker run --rm -v "$PWD:/work" prom/prometheus:v2.53.0 \
+            promtool check config /work/monitoring/prometheus.yml
+          docker run --rm -v "$PWD:/work" prom/alertmanager:v0.27.0 \
+            amtool check-config /work/alertmanager/config.yaml
+
+      - name: Validate Grafana dashboards JSON
+        run: |
+          python3 -c "import json,glob;
+          [json.load(open(p)) for p in glob.glob('grafana/dashboards/*.json')]"
+
+      - name: Run tests
+        run: python3 -m pytest -q
+
+      - name: Smoke-test cost report
+        run: |
+          python3 scripts/cost-report.py --aws samples/aws-cur-sample.csv \
+            --do samples/do-billing-sample.csv --log-daily-gb 25 --log-retention-days 60 \
+            --out-md /tmp/COST_REPORT.md --out-csv /tmp/recommendations.csv
+          cat /tmp/COST_REPORT.md

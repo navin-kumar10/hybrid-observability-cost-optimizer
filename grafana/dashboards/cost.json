@@ -1,0 +1,60 @@
+{
+  "title": "Cloud Cost Overview",
+  "uid": "cloud-cost",
+  "timezone": "utc",
+  "schemaVersion": 39,
+  "version": 1,
+  "tags": ["cost", "aws", "digitalocean"],
+  "panels": [
+    {
+      "id": 1,
+      "title": "Monthly cost by service (from cost-report CSV / external exporter)",
+      "type": "barchart",
+      "description": "Starter: import recommendations.csv as a Grafana CSV source, or wire in OpenCost / YACE metrics. Static thresholds below match scripts/cost-report.py.",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (service) (billing_estimated_cost_usd)",
+          "legendFormat": "{{service}}"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+    },
+    {
+      "id": 2,
+      "title": "Idle / oversized waste (stat)",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(billing_idle_cost_usd)",
+          "legendFormat": "idle $"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+    },
+    {
+      "id": 3,
+      "title": "Log ingestion GB/day",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(loki_distributor_bytes_received_total[5m])) * 86400 / 1e9",
+          "legendFormat": "GB/day"
+        }
+      ],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }
+    },
+    {
+      "id": 4,
+      "title": "Cost annotations",
+      "type": "text",
+      "options": {
+        "content": "Thresholds: idle = CPU<5% and MEM<10% over billing window. Oversized = CPU<25% and MEM<40% with >=2 vCPU. Logs: alert if retention>30d or >50GB/day. See policies/ and docs/COST_OPTIMIZATION.md.",
+        "mode": "markdown"
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 }
+    }
+  ]
+}

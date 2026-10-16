@@ -1,0 +1,7 @@
+resource_id,service,instance_type,vcpu,memory_gb,region,usage_hours,avg_cpu_pct,avg_mem_pct,cost_usd,environment
+i-0a1b2c3d,EC2,t3.micro,2,1,us-east-1,720,3.2,8.5,12.50,prod
+i-0e4f5g6h,EC2,m5.4xlarge,16,64,us-east-1,720,12.0,18.0,280.00,prod
+i-0h7i8j9k,EC2,t3.medium,2,4,us-west-2,720,55.0,60.0,35.00,staging
+db-prod-01,RDS,db.m5.large,2,8,us-east-1,720,6.0,22.0,145.00,prod
+bucket-logs-archive,S3,Standard,,,,720,,,18.30,prod
+nat-gw-prod,VPC,NAT Gateway,,,,720,,,32.40,prod

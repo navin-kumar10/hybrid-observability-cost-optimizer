@@ -1,0 +1,36 @@
+# Starter SLO definitions (authoritative list; alerts in alerts.yml implement burn rates).
+slos:
+  - name: api-availability
+    description: Share of non-5xx responses for public API.
+    target: 99.9
+    window: 30d
+    sli: >
+      sum(rate(http_server_requests_seconds_count{status!~"5.."}[30d]))
+      / sum(rate(http_server_requests_seconds_count[30d]))
+    alert_fast: SLOBurnFast
+    alert_slow: SLOBurnSlow
+
+  - name: api-latency-p99
+    description: p99 latency under 600ms.
+    target: 99.0
+    window: 30d
+    sli: histogram_quantile(0.99, sum by (le) (rate(http_server_requests_seconds_bucket[30d])))
+    threshold_seconds: 0.6
+    alert: LatencySLOBurn
+
+  - name: log-pipeline-delivery
+    description: Loki log delivery success.
+    target: 99.5
+    window: 7d
+    alert: LokiIngestionLag
+
+  - name: trace-pipeline-ingest
+    description: Share of spans ingested without drop (after sampling).
+    target: 95.0
+    window: 7d
+    alert: TraceDropHigh
+
+environments:
+  dev: { availability_target: 99.0, latency_p99_ms: 1000 }
+  staging: { availability_target: 99.5, latency_p99_ms: 800 }
+  prod: { availability_target: 99.9, latency_p99_ms: 600 }

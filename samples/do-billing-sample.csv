@@ -1,0 +1,5 @@
+droplet_id,name,region,size_slug,vcpus,memory_mb,disk_gb,hours,avg_cpu_pct,avg_mem_pct,cost_usd,environment
+12345601,api-prod-01,nyc3,s-2vcpu-4gb,2,4096,80,720,4.0,9.0,24.00,prod
+12345602,worker-prod-02,nyc3,s-8vcpu-32gb,8,32768,160,720,15.0,20.0,160.00,prod
+12345603,dev-sandbox,sfo3,s-1vcpu-2gb,1,2048,50,200,45.0,55.0,7.00,dev
+12345604,staging-web,sfo3,s-2vcpu-4gb,2,4096,80,720,8.0,30.0,28.00,staging

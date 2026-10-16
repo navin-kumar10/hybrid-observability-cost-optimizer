@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+COST_REPORT.md
+recommendations.csv
+
+# Secrets
+.env
+.env.*
+*.pem
+*.key
+*.crt
+secrets/
+
+# Data volumes
+data/
+loki/chunks/
+loki/index/
+prometheus/data/
+grafana/data/
+positions.yaml
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
