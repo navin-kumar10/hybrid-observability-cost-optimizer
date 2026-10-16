@@ -13,6 +13,8 @@ tuning, and monthly cost reports.
 
 ## Architecture
 
+![Architecture](docs/architecture.png)
+
 ```
                           ┌────────────────────────────────────────────┐
                           │            ON-PREM OBSERVABILITY STACK     │
